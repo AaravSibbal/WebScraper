@@ -1,3 +1,6 @@
+import { classInformation } from "./getEvents";
+import { getDeptID } from "./getDept";
+
 export let courseObj:Course[] = []
 
 export interface Course {
@@ -27,6 +30,14 @@ export function createCourseID(str:string|null){
     }
     return null
     
+}
+
+export function populateCourse(course: Course, classInfo: classInformation){
+    course.name = classInfo.title
+    course.id = createCourseID(classInfo.subject)
+    course.code = getCourseCode(classInfo.subject)
+    course.departmentId = getDeptID(classInfo.subject)
+    return course
 }
 
 export function getCourseCode(str: string|null){

@@ -10,11 +10,9 @@ interface department {
 export let deptObj: department[] = []
 
 export function getDeptID(str: string|null){
-    if(str != null){
-        const arr = str.split("(")
-        str = arr[arr.length-1]
-        str = str.substring(0, str.length-1)
-        return str
+    if(str !== null){
+        const arr =str.split(" ")
+        return arr[0]
     }
     return null   
 }

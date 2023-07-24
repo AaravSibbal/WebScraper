@@ -1,8 +1,8 @@
-import { writeToJsonFile } from "./getData"
+import { createFolder, currDept, writeToJsonFile } from "./getData"
 import { Page } from "puppeteer"
-import { meetingTime, createEmptyMeetingTime } from "./getMeetings"
-import { createStaffID } from "./getStaff";
-import { createCourseID } from "./getCourse";
+import { meetingTime, createEmptyMeetingTime, parseMeetingDay, meetingTimeArr } from "./getMeetings"
+import { addStaff, createStaffID, staffObj } from "./getStaff";
+import { createCourseID, createEmptyCourse, populateCourse, courseObj } from "./getCourse";
 
 export interface Event {
     id: string|null;
@@ -19,9 +19,9 @@ export interface Event {
 }
 
 
-export let eventsArr:Event[] = []
+export let EventsArr:Event[] = []
 
-interface classInformation {
+export interface classInformation {
     status: string;
     CRN: string;
     subject: string;
@@ -126,6 +126,8 @@ function populateEvent(classInfo: classInformation, event: Event){
     return event
 }
 
+export type MeetingTimeEvent = [meetingTime, Event|null]
+
 export function createEvents(rawdata: string[]|undefined){
     let eventsArr: string[][] = []
     if(rawdata ===  undefined){
@@ -135,16 +137,62 @@ export function createEvents(rawdata: string[]|undefined){
     eventsArr.forEach(eventData =>{
         let classInfo:classInformation = getClassInformation(eventData[0])
         let event = createEmptyEvent();
+        let course = createEmptyCourse();
+        course = populateCourse(course, classInfo)
         event = populateEvent(classInfo, event)
         let i = 1;
-        while(eventData[i].includes("Meeting Date")){
 
+        while(true){
+            if(!(eventData[i].includes("Meeting Date"))){
+                break;
+            }
+            let emptyMeetingTime = createEmptyMeetingTime()
+            if(i === 1){
+                let MeetingTimeEvent = parseMeetingDay(eventData[i], emptyMeetingTime, event)
+                if(MeetingTimeEvent[1] !== null){
+                    event = MeetingTimeEvent[1]
+                }
+                emptyMeetingTime = MeetingTimeEvent[0]
+            }
+            else{
+                let MeetingTimeEvent = parseMeetingDay(eventData[i], emptyMeetingTime)
+                emptyMeetingTime = MeetingTimeEvent[0]
+            }   
+            event.days.push(emptyMeetingTime)
             i++;
         }
+        if(eventData[i].includes("Also Register in")){
+            event.registrationAdditions.push(getAdditions(eventData[i]))
+            event.physicality = getPhysicality(eventData[i+1])
+        
+        }
+        else{
+            event.physicality = getPhysicality(eventData[i])
+        }
+        EventsArr.push(event)
+        courseObj.push(course)
+        addStaff(classInfo.instructor)
     })
+    
+    writeToJsonFile(EventsArr, getJsonName("ACCT"))
+    writeToJsonFile(courseObj, getJsonName("ACCT"))
+    writeToJsonFile(staffObj, getJsonName("ACCT"))
     return eventsArr
 
     
+}
+
+function getJsonName(deptName:string|null){
+    return `${deptName}.json`
+}
+
+function writeEventFile(EventsArr: Event[], deptName:string, term: string){
+    let dirPathname = `data/events/${term}`
+    createFolder(dirPathname)
+    let fileName = getJsonName(deptName)
+    let filePathname = `data/events/${term}/${fileName}`
+    writeToJsonFile(EventsArr, filePathname)
+
 }
 
 export function getPhysicality(line: string|null){

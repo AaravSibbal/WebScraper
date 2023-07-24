@@ -1,4 +1,5 @@
 import { Event } from "./getEvents"
+import { MeetingTimeEvent } from "./getEvents";
 
 export interface meetingTime {
     day: string[]|null,
@@ -52,8 +53,8 @@ function parseDays(days: string){
        
 }
 
-function parseMeetingDay(line: string, meetingTimeObj: meetingTime, event: Event):
-    {meetingTime: meetingTime, e: Event}
+export function parseMeetingDay(line: string, meetingTimeObj: meetingTime, event: Event|null =null):
+MeetingTimeEvent
 {
     const idxOfDate = line.indexOf(":");
     const idxOfTo = line.indexOf("to");
@@ -72,14 +73,13 @@ function parseMeetingDay(line: string, meetingTimeObj: meetingTime, event: Event
     let daysArr = parseDays(days)
     
     let time = line.substring(idxOfTime+5, idxOfBuilding-1)
-    let timeArr, startTime, endTime
+    let timeArr
+    let startTime = null
+    let endTime = null
     if(time.includes("-")){
         timeArr = time.split("-");
         startTime = timeArr[0].trim()
         endTime = timeArr[1].trim()
-    }else{
-        startTime = null
-        endTime = null
     }
 
 
@@ -96,10 +96,14 @@ function parseMeetingDay(line: string, meetingTimeObj: meetingTime, event: Event
     meetingTimeObj.endTime = endTime
     meetingTimeObj.room = room
     meetingTimeObj.startTime = startTime
+    let MeetingTimeEvent:MeetingTimeEvent = [meetingTimeObj, event]
+    
+    if(event === null){
+        return MeetingTimeEvent
+    }
     event.startDate = startDate
     event.endDate = endDate
-    return {meetingTime:meetingTimeObj, e:event}
-
+    return MeetingTimeEvent
 }
 
 
@@ -114,50 +118,3 @@ function parseDate(date: string): string{
     date = `${year}-${monthNum}-${day}`
     return date
 }
-
-/**
-export function getAllMeetingDays(arr:(string|null)[], i:number, meetingTimeObj: meetingTime, event: Event):
-{newIndex:number, meetingTimeArr:meetingTime[], updatedEvent: Event}
-{
-    let meetingTimeArr = []
-
-    while(true){
-        let line = arr[i]
-        
-        if (line === null) {
-            break;
-        }
-
-        if (line[0] !== " ") {
-            break;
-        }
-
-        let { meetingTime, e } = parseMeetingDay(line, meetingTimeObj, event)
-        
-        meetingTimeArr.push(meetingTime)
-
-        
-        return {newIndex:i, meetingTimeArr, updatedEvent: e }
-
-
-
-
-        // if(line !== null){
-        //      if(line[0] === " "){
-               
-                
-        //     }
-        //     else{
-        //     return {i, meetingTimeArr, e}
-        //     } 
-
-        // }
-        // else{
-        //     return {i, meetingTimeArr, event}
-        // }
-        
-        i++
-        
-    }
-}
- */

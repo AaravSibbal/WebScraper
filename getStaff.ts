@@ -1,4 +1,4 @@
-let staffObj:staff[] = []
+export let staffObj:staff[] = []
 let staffMap = new Map<string, string>();
 
 interface staff {
@@ -23,16 +23,21 @@ export function createStaffID(name: string|null){
 
 }
 
-function addStaff(name: string){
+export function addStaff(name: string|null){
     if(name === null){
         return
     }
     if(staffMap.has(name)){
         return;
     }
-    let key = createStaffID(name)
-    if(key === null){
+    let id = createStaffID(name)
+    if(id === null){
         return;
     }
-    staffMap.set(name, key)
+    staffMap.set(name, id)
+    let staff:staff = {
+        name: name,
+        id: id
+    }
+    staffObj.push(staff)
 }

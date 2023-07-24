@@ -1,5 +1,1 @@
-[
-  { "id": "summer-2023", "name": "Summer 2023" },
-  { "id": "fall-2023", "name": "Fall 2023" },
-  { "id": "winter-2024", "name": "Winter 2024" }
-]
+[{"id":"summer-2023","name":"Summer 2023"},{"id":"fall-2023","name":"Fall 2023"},{"id":"winter-2024","name":"Winter 2024"}]
