@@ -3,7 +3,7 @@ import { Page } from "puppeteer";
 import { getDepartments, getDeptLen, getDeptIDForDepts } from "./getDept";
 import { createEvents, emptyEvent } from "./getEvents";
 import { getTerms } from "./getTerms";
-import { emptyStaff } from "./getStaff";
+import { updateStaff, emptyStaffMapObj } from "./getStaff";
 import { emptyCourse } from "./getCourse";
 import fs from "fs";
 import path from "path";
@@ -68,7 +68,7 @@ async function getPageData(
 }
 function emptyAllObjects() {
   emptyEvent();
-  emptyStaff();
+  updateStaff(currDept);
   emptyCourse();
 }
 
@@ -89,7 +89,7 @@ async function getAllData(url: string) {
   page = pagesArr[pagesArr.length - 1];
   await getDepartments(page); // from the new page get the departments
   let length = await getDeptLen(page);
-  
+  emptyStaffMapObj();
   for (let i = 2; i < length + 1; i++) {
     pagesArr = await browser.pages(); // get the new page that is created
     page = pagesArr[pagesArr.length - 1];
@@ -114,9 +114,6 @@ async function getAllData(url: string) {
 
     await getPageData(page, currDept, currTerm);
     await page.goBack();
-
-    //await page.waitForNavigation()
-    // console.log(deptObj[2].name)
   }
   // just for visual purposes
   setTimeout(() => {

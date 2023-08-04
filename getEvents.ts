@@ -8,9 +8,11 @@ import {
 } from "./getMeetings";
 import {
   addStaff,
+  addStaffObj,
   createStaffID,
   staffObj,
   writeStaffToFile,
+  updateStaff,
 } from "./getStaff";
 import {
   createCourseID,
@@ -149,6 +151,7 @@ export function createEvents(
   currDept: string | null,
   currTerm: string | null
 ) {
+  updateStaff(currDept)
   let eventsArr: string[][] = [];
   if (rawdata === undefined) {
     return null;
@@ -160,11 +163,9 @@ export function createEvents(
     let course = createEmptyCourse();
     course = populateCourse(course, classInfo);
     event = populateEvent(classInfo, event);
-    console.log("Event Data that is getting parsed:")
-    console.log(eventData)
     let i = 1;
     while (true) {
-      if(eventData[i] === undefined){
+      if (eventData[i] === undefined) {
         break;
       }
       if (!eventData[i].includes("Meeting Date")) {
@@ -201,7 +202,7 @@ export function createEvents(
     addStaff(classInfo.instructor);
     // console.log(classInfo)
   });
-
+  addStaffObj(currDept, staffObj);
   writeEventFile(currDept, currTerm);
   writeCourseToFile(currDept, currTerm);
   writeStaffToFile(currTerm, currDept);
@@ -219,8 +220,8 @@ async function writeEventFile(deptName: string | null, term: string | null) {
 }
 
 export function getPhysicality(line: string | null) {
-  if((line === undefined)||(line === null)){
-    return null
+  if (line === undefined || line === null) {
+    return null;
   }
 
   if (line.includes("IN-PERSON")) {

@@ -6,7 +6,23 @@ interface department {
   name: string | null;
 }
 
-export let deptObj: department[] = [];
+let deptObj: department[] = [];
+let deptMap = new Map<string, string>();
+
+function addDept(tempObj: department) {
+  if (tempObj.id === null) {
+    return false;
+  }
+  if (tempObj.name === null) {
+    return false;
+  }
+  if (deptMap.has(tempObj.id)) {
+    return false;
+  }
+  deptMap.set(tempObj.id, tempObj.name);
+  deptObj.push(tempObj);
+  return true;
+}
 
 export function getDeptID(str: string | null) {
   if (str !== null) {
@@ -35,6 +51,8 @@ export function getDeptName(str: string | null) {
   return null;
 }
 
+// this only works in the context of the page
+// and the implementation that is in the codebase is using is exactly for
 export async function getDeptLen(page: Page) {
   const length = page.$eval("#subj_id", (elements: any) => {
     return elements.childElementCount;
@@ -52,7 +70,12 @@ export async function getDepartments(page: Page) {
     let tempObj: department = { id: "", name: "" };
     tempObj.id = getDeptIDForDepts(rawTxt);
     tempObj.name = getDeptName(rawTxt);
-    deptObj.push(tempObj);
+    addDept(tempObj);
   }
+}
+
+// TODO: add the writedepttofile after the loops
+
+export function writeDeptToFile() {
   writeToJsonFile(deptObj, "data/dept.json");
 }
