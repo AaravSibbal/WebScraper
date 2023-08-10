@@ -7,7 +7,7 @@ interface terms {
   name: string | null;
 }
 
-function createTermID(str: string | null) {
+export function createTermID(str: string | null) {
   if (str != null) {
     let arr = str.split(" ");
     str = arr[0].toLowerCase() + "-" + arr[1];

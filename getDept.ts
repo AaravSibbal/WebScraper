@@ -54,7 +54,8 @@ export function getDeptName(str: string | null) {
 // this only works in the context of the page
 // and the implementation that is in the codebase is using is exactly for
 export async function getDeptLen(page: Page) {
-  const length = page.$eval("#subj_id", (elements: any) => {
+  // #subj_id
+  let  length = page.$eval("#subj_id", (elements: any) => {
     return elements.childElementCount;
   });
   return length;

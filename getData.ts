@@ -1,8 +1,8 @@
 import { writeFile } from "fs/promises";
 import { Page } from "puppeteer";
-import { getDepartments, getDeptLen, getDeptIDForDepts } from "./getDept";
+import { getDepartments, getDeptLen, getDeptIDForDepts, writeDeptToFile } from "./getDept";
 import { createEvents, emptyEvent } from "./getEvents";
-import { getTerms } from "./getTerms";
+import { getTerms, createTermID } from "./getTerms";
 import { updateStaff, emptyStaffMapObj } from "./getStaff";
 import { emptyCourse } from "./getCourse";
 import fs from "fs";
@@ -73,48 +73,87 @@ function emptyAllObjects() {
 }
 
 async function getAllData(url: string) {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({ headless: 'new'});
   let page = await browser.newPage();
   await page.goto(url);
 
   await getTerms(page);
 
   //get the proceed btn
-  const [proceedBtn] = await page.$x(
-    "/html/body/section/section/form/table/tbody/tr[3]/td/div/input"
-  );
-  await proceedBtn.click(); //click the btn
-  await page.waitForNavigation(); //because it navigates wait for the navigation
-  let pagesArr = await browser.pages(); // get the new page that is created
-  page = pagesArr[pagesArr.length - 1];
-  await getDepartments(page); // from the new page get the departments
-  let length = await getDeptLen(page);
-  emptyStaffMapObj();
-  for (let i = 2; i < length + 1; i++) {
-    pagesArr = await browser.pages(); // get the new page that is created
-    page = pagesArr[pagesArr.length - 1];
-
-    emptyAllObjects();
-    console.log(i);
-    let [selectElem] = await page.$x(`//*[@id="subj_id"]/option[${i}]`); //gets accounting
-    let txt = await selectElem.getProperty("textContent");
+  for(let j=1; j<4; j++){
+    // TODO: write the logic for setting the curr term and making the folders then we good
+    let [termBtn] = await page.$x(`//*[@id="term_code"]/option[${j}]`)
+    let txt = await termBtn.getProperty("textContent");
     let rawTxt: string | null = await txt.jsonValue();
-    currDept = getDeptIDForDepts(rawTxt);
+    let dropDown = await page.$x('//*[@id="term_code"]')
+    
+    await page.evaluate((j: number) => {
+      const selectElement = document.querySelector('select') as HTMLSelectElement;
+      selectElement.options[j-1].selected = true;
+      selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+    },j);
+    
 
-    await selectElem.click(); // clicks acounting
-    //gets the search button
-    let [search] = await page.$x(
-      "/html/body/section/section/form/table/tbody/tr[5]/td/input[1]"
+    // await page.click(dropDown);
+    // await page.$eval()
+    // let option = await page.$x(`//*[@id="term_code"]/option[${j}]`)
+    // await page.click(option);
+    
+    currTerm = createTermID(rawTxt);
+    createFolder(`../data/events/${currTerm}`)
+    createFolder(`../data/courses/${currTerm}`)
+    
+    // await page.select('')
+    
+    const [proceedBtn] = await page.$x(
+      "/html/body/section/section/form/table/tbody/tr[3]/td/div/input"
     );
-    await search.click(); //clicks the search button
-    await page.waitForNavigation(); //waiting for navingation to get to the page
-    pagesArr = await browser.pages(); // gets the all the pages
-    console.log(pagesArr[pagesArr.length - 1].url()); //the most recent opened page
+    await proceedBtn.click(); //click the btn
+    await page.waitForNavigation(); //because it navigates wait for the navigation
+    let pagesArr = await browser.pages(); // get the new page that is created
     page = pagesArr[pagesArr.length - 1];
+    await getDepartments(page); // from the new page get the departments
+    setTimeout(()=>{
+        console.log("boom")
+    }, 2000)
+    let length = await page.$eval("#subj_id", (parent: HTMLSelectElement) => {
+      return parent.childElementCount
+    });
+    let text = await page.$eval("#subj_id", (parent: HTMLSelectElement) => {
+      return parent.outerText
+    });
+    // console.log("this is the text for subject"+text)
+    // // let length = await getDeptLen(page);
+    // // emptyStaffMapObj();
+    // console.log("This is the curr Term"+currTerm)
+    // console.log("This is the length of the depts"+length)
+    for (let i = 2; i < length + 1; i++) {
+      pagesArr = await browser.pages(); // get the new page that is created
+      page = pagesArr[pagesArr.length - 1];
 
-    await getPageData(page, currDept, currTerm);
-    await page.goBack();
+      emptyAllObjects();
+      console.log(i);
+      let [selectElem] = await page.$x(`//*[@id="subj_id"]/option[${i}]`); //gets accounting
+      let txt = await selectElem.getProperty("textContent");
+      let rawTxt: string | null = await txt.jsonValue();
+      currDept = getDeptIDForDepts(rawTxt);
+      await selectElem.click(); // clicks acounting
+      //gets the search button
+      let [search] = await page.$x(
+        "/html/body/section/section/form/table/tbody/tr[5]/td/input[1]"
+      );
+      await search.click(); //clicks the search button
+      await page.waitForNavigation(); //waiting for navingation to get to the page
+      pagesArr = await browser.pages(); // gets the all the pages
+      console.log(pagesArr[pagesArr.length - 1].url()); //the most recent opened page
+      page = pagesArr[pagesArr.length - 1];
+
+      await getPageData(page, currDept, currTerm);
+      await page.goBack();
+    }
+    await page.goBack()
   }
+  writeDeptToFile()
   // just for visual purposes
   setTimeout(() => {
     browser.close();
